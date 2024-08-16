@@ -36,8 +36,8 @@ def get_results() -> any:
     if cbox_genres:
         call += "&keep_genres"
     res = requests.get(call)
-    print(res.json())
-    print(pd.DataFrame.from_dict(res.json(),orient="index"))
+    #print(res.json())
+    #print(pd.DataFrame.from_dict(res.json(),orient="index"))
     st.session_state.results = pd.DataFrame.from_dict(res.json(),orient="index")
 
 def callback():
