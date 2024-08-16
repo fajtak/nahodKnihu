@@ -75,6 +75,12 @@ if "lastShown" not in st.session_state:
 
 st.sidebar.title("Nahoď knihu!")
 st.sidebar.subheader("Váš AI knihovník")
+st.sidebar.write("Dočetli jsme někdy knihu a položili si otázku a jaká kniha bude další?")
+st.sidebar.write("Jak vybíráte nové knihy? Doporučení od rodiny, přátel, na diskuzním fóru?")
+st.sidebar.write("Máme pro Vás ještě jednu možnost!")
+st.sidebar.write("Nechte si knihy doporučit od AI pomocí podobnosti popisků knih na obalu knihy.")
+st.sidebar.write("Jednoduše zadáte pár podobných knih, které se Vám líbily ...")
+st.sidebar.write("... a my Vám nabídneme další!")
 
 # pass search function to searchbox
 st.session_state.selected_value = st_searchbox(
