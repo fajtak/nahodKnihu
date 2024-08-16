@@ -1,5 +1,4 @@
 import streamlit as st
-import wikipedia
 from streamlit_searchbox import st_searchbox
 import requests
 import pandas as pd
