@@ -122,11 +122,11 @@ st.dataframe(st.session_state.data[["title","authors","rating","publish_year"]],
 #cbox_authors = st.checkbox("Vynechat původní autory")
 
 
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3 = st.columns((1,2,2))
 cbox_authors = col1.checkbox("Vynechat původní autory",key="cbox_authors")
-cbox_genres = col2.checkbox("Stejné žánry",key="cbox_genres")
-slider_minRatings = col3.slider("Minimální hodnocení",0,100,value=70)
-slider_minYear = col4.slider("Minimální rok vydání",1900,2026, value=1970)
+cbox_genres = col1.checkbox("Stejné žánry",key="cbox_genres")
+slider_minRatings = col2.slider("Minimální hodnocení",0,100,value=70)
+slider_minYear = col3.slider("Minimální rok vydání",1900,2026, value=1970)
 
 #cbox_genres = st.checkbox("Stejné žánry")
 #slider_minRatings = st.slider("Minimální hodnocení",0,100)
