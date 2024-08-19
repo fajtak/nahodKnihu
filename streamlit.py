@@ -30,7 +30,7 @@ def get_results() -> any:
         return None
     book_ids = ",".join(st.session_state.data["id"].to_list())
     print(book_ids)
-    call = f"https://nahod-knihu-0fe888ecfa27.herokuapp.com/recommend-books/{book_ids}?thres_rating={slider_minRatings}"
+    call = f"https://nahod-knihu-0fe888ecfa27.herokuapp.com/recommend-books/{book_ids}?thres_rating={slider_minRatings}&thres_year={slider_minYear}"
     if cbox_authors:
         call += "&exclude_authors"
     if cbox_genres:
@@ -50,6 +50,8 @@ def vote(item):
     #st.write(item)
     st.title(f"{item['title']} - {item['authors']}")
     st.write(f"Hodnocení: {item['rating']} %")
+    st.write(f"Rok vydání: {item['publish_year']}")
+    st.write(f"Žánry: {', '.join(item['genres'])}")
     st.write(item["description"])
     st.session_state.info_book["selection"]["rows"] = []
     st.link_button("Přejít na databázi knih", item["url"])
@@ -65,7 +67,7 @@ if "selected_books" not in st.session_state:
     st.session_state.selected_books = []
 
 if "data" not in st.session_state:
-    st.session_state.data = pd.DataFrame(columns=["id","title","authors","rating"])
+    st.session_state.data = pd.DataFrame(columns=["id","title","authors","rating","publish_year"])
 
 if "results" not in st.session_state:
     st.session_state.results = pd.DataFrame()
@@ -96,18 +98,35 @@ if st.session_state.selected_value:
     if st.session_state.selected_value not in st.session_state.selected_books:
         st.session_state.selected_books.append(st.session_state.selected_value)
         book_info = get_book_info(st.session_state.selected_value)
-        st.session_state.data.loc[len(st.session_state.data)] = [st.session_state.selected_value,book_info["title"],book_info["authors"],book_info["rating"]]
+        st.session_state.data.loc[len(st.session_state.data)] = [st.session_state.selected_value,book_info["title"],book_info["authors"],book_info["rating"],book_info["publish_year"]]
         st.session_state.selected_value = None
 
-st.dataframe(st.session_state.data[["title","authors","rating"]],hide_index=True,width=1200,key="df_selected_books",on_select=callback)
+search_column_config={
+        "title": "Název knihy",
+        "authors": "Autoři",
+        "rating": st.column_config.NumberColumn(
+            "Hodnocení",
+            format="%d ⭐",
+            width="small"
+        ),
+        #"publish_year": "Rok vydání",
+        "publish_year": st.column_config.TextColumn(
+            "Rok vydání",
+            #format="YYYY",
+            width="small",
+        ),
+}
+
+st.dataframe(st.session_state.data[["title","authors","rating","publish_year"]],hide_index=True,width=1200,key="df_selected_books",on_select=callback,column_config=search_column_config)
 
 #cbox_authors = st.checkbox("Vynechat původní autory")
 
 
-col1, col2, col3 = st.columns(3)
+col1, col2, col3, col4 = st.columns(4)
 cbox_authors = col1.checkbox("Vynechat původní autory",key="cbox_authors")
 cbox_genres = col2.checkbox("Stejné žánry",key="cbox_genres")
-slider_minRatings = col3.slider("Minimální hodnocení",0,100)
+slider_minRatings = col3.slider("Minimální hodnocení",0,100,value=70)
+slider_minYear = col4.slider("Minimální rok vydání",1900,2026, value=1970)
 
 #cbox_genres = st.checkbox("Stejné žánry")
 #slider_minRatings = st.slider("Minimální hodnocení",0,100)
@@ -118,6 +137,9 @@ column_config={
         "title": "Název knihy",
         "authors": "Autoři",
         "candidates": "Podobnost",
+        "publish_year": st.column_config.TextColumn(
+            "Rok vydání",
+        ),
         "genres": "Žánry",
         "rating": st.column_config.NumberColumn(
             "Hodnocení",
@@ -127,5 +149,5 @@ column_config={
     }
 
 if len(st.session_state.results) > 0:
-    st.dataframe(st.session_state.results[["title","authors","rating","candidates","genres","url"]].sort_values("candidates",ascending=False),width=1200,column_config = column_config,hide_index=True,selection_mode="single-row",on_select=show_book, key="info_book")
+    st.dataframe(st.session_state.results[["title","authors","rating","publish_year","candidates","genres","url"]].sort_values("candidates",ascending=False),width=1200,column_config = column_config,hide_index=True,selection_mode="single-row",on_select=show_book, key="info_book")
     #st.dataframe(st.session_state.results,hide_index=True,width=800)
