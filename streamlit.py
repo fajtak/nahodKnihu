@@ -2,6 +2,7 @@ import streamlit as st
 from streamlit_searchbox import st_searchbox
 import requests
 import pandas as pd
+import os
 
 st.set_page_config(
     page_title="Nahoď knihu",
@@ -10,11 +11,16 @@ st.set_page_config(
     #initial_sidebar_state="expanded")
 )
 
+if "OPENAI_API_KEY" in os.environ.keys():
+    pass
+    #print(os.environ['OPENAI_API_KEY'])
+elif "OPENAI_API_KEY" in st.secrets.keys():
+    os.environ["OPENAI_API_KEY"] = st.secrets["OPEN_API_KEY"]
 
 def search_database(searchterm: str) -> list[any]:
     if searchterm:
         res = requests.get(f"https://nahod-knihu-0fe888ecfa27.herokuapp.com/get-books/{searchterm}")
-        #print(res.json())
+        print(res.json())
         return [(value["title"],key) for key,value in res.json().items()]
     else:
         []
@@ -38,6 +44,15 @@ def get_results() -> any:
     res = requests.get(call)
     #print(res.json())
     #print(pd.DataFrame.from_dict(res.json(),orient="index"))
+    st.session_state.results = pd.DataFrame.from_dict(res.json(),orient="index")
+
+def get_results_byText() -> any:
+    if len(st.session_state.descText) < 20:
+        st.warning('Musíte použít alespoň 20 znaků na popis knihy!', icon="⚠️")
+        return None
+    #call = f"http://127.0.0.1:8000/recommend-books-byText/{st.session_state.descText}?thres_rating={slider_minRatings}&thres_year={slider_minYear}"
+    call = f"https://nahod-knihu-0fe888ecfa27.herokuapp.com//recommend-books-byText/{st.session_state.descText}?thres_rating={slider_minRatings}&thres_year={slider_minYear}"
+    res = requests.get(call)
     st.session_state.results = pd.DataFrame.from_dict(res.json(),orient="index")
 
 def callback():
@@ -75,6 +90,10 @@ if "results" not in st.session_state:
 if "lastShown" not in st.session_state:
     st.session_state.lastShown = -1
 
+if "descText" not in st.session_state:
+    st.session_state.descText = ""
+
+#st.logo("logo.png")
 st.sidebar.title("Nahoď knihu!")
 st.sidebar.subheader("Váš AI knihovník")
 st.sidebar.write("Dočetli jsme někdy knihu a položili si otázku a jaká kniha bude další?")
@@ -84,24 +103,36 @@ st.sidebar.write("Nechte si knihy doporučit od AI pomocí podobnosti popisků k
 st.sidebar.write("Jednoduše zadáte pár podobných knih, které se Vám líbily ...")
 st.sidebar.write("... a my Vám nabídneme další!")
 
-# pass search function to searchbox
-st.session_state.selected_value = st_searchbox(
-    search_database,
-    placeholder = "Název knihy nebo její část",
-    default = None,
-    label = "Zadej knihy, které sis v poslední době užil:",
-    key="book_searchbox",
-    clear_on_submit = True,
+st.sidebar.divider()
+
+search_mode = st.sidebar.radio(
+    "Jak chcete hledat nové knihy",
+    ["***Podle jiných knih 📚***", "***Podle Vašeho popisu ✍***"],
+    captions=[
+        "Podle podobnosti s vybranými knihami.",
+        "Podle podobnosti Vašeho textu s popisem knihy.",
+    ],
 )
 
-if st.session_state.selected_value:
-    if st.session_state.selected_value not in st.session_state.selected_books:
-        st.session_state.selected_books.append(st.session_state.selected_value)
-        book_info = get_book_info(st.session_state.selected_value)
-        st.session_state.data.loc[len(st.session_state.data)] = [st.session_state.selected_value,book_info["title"],book_info["authors"],book_info["rating"],book_info["publish_year"]]
-        st.session_state.selected_value = None
+if search_mode == "***Podle jiných knih 📚***":
+# pass search function to searchbox
+    st.session_state.selected_value = st_searchbox(
+        search_database,
+        placeholder = "Název knihy nebo její část",
+        default = None,
+        label = "Zadej knihy, které sis v poslední době užil:",
+        key="book_searchbox",
+        clear_on_submit = True,
+    )
 
-search_column_config={
+    if st.session_state.selected_value:
+        if st.session_state.selected_value not in st.session_state.selected_books:
+            st.session_state.selected_books.append(st.session_state.selected_value)
+            book_info = get_book_info(st.session_state.selected_value)
+            st.session_state.data.loc[len(st.session_state.data)] = [st.session_state.selected_value,book_info["title"],book_info["authors"],book_info["rating"],book_info["publish_year"]]
+            st.session_state.selected_value = None
+
+    search_column_config={
         "title": "Název knihy",
         "authors": "Autoři",
         "rating": st.column_config.NumberColumn(
@@ -115,23 +146,28 @@ search_column_config={
             #format="YYYY",
             width="small",
         ),
-}
+    }
 
-st.dataframe(st.session_state.data[["title","authors","rating","publish_year"]],hide_index=True,width=1200,key="df_selected_books",on_select=callback,column_config=search_column_config)
+    if len(st.session_state.data) > 0:
+        st.dataframe(st.session_state.data[["title","authors","rating","publish_year"]],hide_index=True,width=1200,key="df_selected_books",on_select=callback,column_config=search_column_config)
 
-#cbox_authors = st.checkbox("Vynechat původní autory")
+else:
+    st.session_state.descText = st.text_area("Nové knihy by měly být o:",placeholder="mladém chlapci, který jako dítě přežil pokus o vraždu a později zjistil, že jě kouzelníkem ...")
+
 
 
 col1, col2, col3 = st.columns((1,2,2))
-cbox_authors = col1.checkbox("Vynechat původní autory",key="cbox_authors")
-cbox_genres = col1.checkbox("Stejné žánry",key="cbox_genres")
+if search_mode == "***Podle jiných knih 📚***":
+	cbox_authors = col1.checkbox("Vynechat původní autory",key="cbox_authors")
+	cbox_genres = col1.checkbox("Stejné žánry",key="cbox_genres")
 slider_minRatings = col2.slider("Minimální hodnocení",0,100,value=70)
 slider_minYear = col3.slider("Minimální rok vydání",1900,2026, value=1970)
 
-#cbox_genres = st.checkbox("Stejné žánry")
-#slider_minRatings = st.slider("Minimální hodnocení",0,100)
+if search_mode == "***Podle jiných knih 📚***":
+	st.button("Hledat podobné knihy",on_click=get_results)
+else:
+	st.button("Hledat popsané knihy",on_click=get_results_byText)
 
-st.button("Hledat podobné knihy",on_click=get_results)
 
 column_config={
         "title": "Název knihy",
