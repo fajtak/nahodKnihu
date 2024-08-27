@@ -181,7 +181,7 @@ column_config={
             "Hodnocení",
             format="%d ⭐"
         ),
-        "url": st.column_config.LinkColumn("Odkaz databáze knih",display_text="Databáze knih"),
+        "url": st.column_config.LinkColumn("Odkazy",display_text="Databáze knih"),
     }
 
 if len(st.session_state.results) > 0:
