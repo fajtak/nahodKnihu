@@ -20,7 +20,7 @@ elif "OPENAI_API_KEY" in st.secrets.keys():
 def search_database(searchterm: str) -> list[any]:
     if searchterm:
         res = requests.get(f"https://nahod-knihu-0fe888ecfa27.herokuapp.com/get-books/{searchterm}")
-        print(res.json())
+        #print(res.json())
         return [(value["title"],key) for key,value in res.json().items()]
     else:
         []
@@ -35,7 +35,7 @@ def get_results() -> any:
         st.warning('Musíte vybrat nějakou Vaši oblíbenou knihu!', icon="⚠️")
         return None
     book_ids = ",".join(st.session_state.data["id"].to_list())
-    print(book_ids)
+    #print(book_ids)
     call = f"https://nahod-knihu-0fe888ecfa27.herokuapp.com/recommend-books/{book_ids}?thres_rating={slider_minRatings}&thres_year={slider_minYear}"
     if cbox_authors:
         call += "&exclude_authors"
@@ -187,3 +187,8 @@ column_config={
 if len(st.session_state.results) > 0:
     st.dataframe(st.session_state.results[["title","authors","rating","publish_year","candidates","genres","url"]].sort_values("candidates",ascending=False),width=1200,column_config = column_config,hide_index=True,selection_mode="single-row",on_select=show_book, key="info_book")
     #st.dataframe(st.session_state.results,hide_index=True,width=800)
+
+footer_html = """<div style='text-align: center;'>
+  <p>Vyvinuto s ❤️  by Fajťák. Případné dotazy, přípomínky, stížnosti a nápady posílejte na nahodknihu@gmail.com</p>
+</div>"""
+st.markdown(footer_html, unsafe_allow_html=True)
