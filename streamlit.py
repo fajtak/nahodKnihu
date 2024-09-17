@@ -118,7 +118,7 @@ if search_mode == "***Podle jiných knih 📚***":
 # pass search function to searchbox
     st.session_state.selected_value = st_searchbox(
         search_database,
-        placeholder = "Název knihy nebo její část",
+        placeholder = "Název knihy nebo jméno autora",
         default = None,
         label = "Zadej knihy, které sis v poslední době užil:",
         key="book_searchbox",
